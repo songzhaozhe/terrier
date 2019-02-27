@@ -7,7 +7,7 @@ TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContex
   // This latch has to also protect addition of this transaction to the running transaction table. Otherwise,
   // the thread might get scheduled out while other transactions commit, and the GC will deallocate their version
   // chain which may be needed for this transaction, assuming that this transaction does not exist.
-//  common::SharedLatch::ScopedSharedLatch guard(&commit_latch_);
+  common::SharedLatch::ScopedSharedLatch guard(&commit_latch_);
   timestamp_t start_time = time_++;
 
   // TODO(Tianyu):
@@ -18,9 +18,9 @@ TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContex
   auto *const result =
       new TransactionContext(start_time, start_time + INT64_MIN, buffer_pool_, log_manager_, thread_context);
 //  common::SharedLatch::ScopedExclusiveLatch running_guard(&(thread_context->curr_running_txns_latch_));
-//  common::SpinLatch::ScopedSpinLatch running_guard(&curr_running_txns_latch_);
-  const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.emplace(result->StartTime());
-//  const auto ret UNUSED_ATTRIBUTE = curr_running_txns_.emplace(result->StartTime());
+  common::SpinLatch::ScopedSpinLatch running_guard(&curr_running_txns_latch_);
+//  const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.emplace(result->StartTime());
+  const auto ret UNUSED_ATTRIBUTE = curr_running_txns_.emplace(result->StartTime());
   TERRIER_ASSERT(ret.second, "commit start time should be globally unique");
   return result;
 }
