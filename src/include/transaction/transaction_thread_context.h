@@ -1,5 +1,7 @@
 #pragma once
 #include "transaction/transaction_defs.h"
+#include <unordered_set>
+#include "common/shared_latch.h"
 
 namespace terrier::transaction {
 /**
