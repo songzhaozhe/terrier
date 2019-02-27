@@ -24,6 +24,7 @@ class TransactionThreadContext {
 
   std::unordered_set<timestamp_t> curr_running_txns_;
   common::SharedLatch curr_running_txns_latch_;
+  TransactionQueue completed_txns_;
 
  private:
   // id of the worker thread on which the transaction start and finish.
