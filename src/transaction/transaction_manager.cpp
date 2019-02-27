@@ -103,8 +103,13 @@ timestamp_t TransactionManager::Commit(TransactionContext *const txn, transactio
     const timestamp_t start_time = txn->StartTime();
 //    const size_t ret UNUSED_ATTRIBUTE = curr_running_txns_.erase(start_time);
     TransactionThreadContext *thread_context = txn->GetThreadContext();
-    common::SharedLatch::ScopedExclusiveLatch running_guard(&(thread_context->curr_running_txns_latch_));
-    const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.erase(start_time);
+    if (thread_context == nullptr) {
+      common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
+      const size_t ret UNUSED_ATTRIBUTE = curr_running_txns_.erase(start_time);
+    } else {
+      common::SharedLatch::ScopedExclusiveLatch running_guard(&(thread_context->curr_running_txns_latch_));
+      const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.erase(start_time);
+    }
     TERRIER_ASSERT(ret == 1, "Committed transaction did not exist in global transactions table");
     // It is not necessary to have to GC process read-only transactions, but it's probably faster to call free off
     // the critical path there anyway
@@ -132,8 +137,13 @@ void TransactionManager::Abort(TransactionContext *const txn) {
     const timestamp_t start_time = txn->StartTime();
 //    const size_t ret UNUSED_ATTRIBUTE = curr_running_txns_.erase(start_time);
     TransactionThreadContext *thread_context = txn->GetThreadContext();
-    common::SharedLatch::ScopedExclusiveLatch running_guard(&(thread_context->curr_running_txns_latch_));
-    const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.erase(start_time);
+    if (thread_context == nullptr) {
+      common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
+      const size_t ret UNUSED_ATTRIBUTE = curr_running_txns_.erase(start_time);
+    } else {
+      common::SharedLatch::ScopedExclusiveLatch running_guard(&(thread_context->curr_running_txns_latch_));
+      const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.erase(start_time);
+    }
     TERRIER_ASSERT(ret == 1, "Aborted transaction did not exist in global transactions table");
     if (gc_enabled_) {
       common::SharedLatch::ScopedSharedLatch guard(&commit_latch_);
