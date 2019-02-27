@@ -14,7 +14,6 @@ TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContex
   // Doing this with std::map or other data structure is risky though, as they may not
   // guarantee that the iterator or underlying pointer is stable across operations.
   // (That is, they may change as concurrent inserts and deletes happen)
-  //  TERRIER_ASSERT(!thread_context.Null(), "context should not be null");
   auto *const result =
       new TransactionContext(start_time, start_time + INT64_MIN, buffer_pool_, log_manager_, thread_context);
   if (thread_context == nullptr) {
