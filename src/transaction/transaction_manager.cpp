@@ -14,7 +14,7 @@ TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContex
   // Doing this with std::map or other data structure is risky though, as they may not
   // guarantee that the iterator or underlying pointer is stable across operations.
   // (That is, they may change as concurrent inserts and deletes happen)
-//  TERRIER_ASSERT(!thread_context.Null(), "context should not be null");
+  //  TERRIER_ASSERT(!thread_context.Null(), "context should not be null");
   auto *const result =
       new TransactionContext(start_time, start_time + INT64_MIN, buffer_pool_, log_manager_, thread_context);
   if (thread_context == nullptr) {
@@ -22,8 +22,7 @@ TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContex
     const auto ret UNUSED_ATTRIBUTE = curr_running_txns_.emplace(result->StartTime());
   } else {
     common::SharedLatch::ScopedExclusiveLatch running_guard(&(thread_context->curr_running_txns_latch_));
-    const auto ret
-    UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.emplace(result->StartTime());
+    const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.emplace(result->StartTime());
   }
   TERRIER_ASSERT(ret.second, "commit start time should be globally unique");
   return result;
@@ -180,10 +179,10 @@ void TransactionManager::GCLastUpdateOnAbort(TransactionContext *const txn) {
 
 timestamp_t TransactionManager::OldestTransactionStartTime() const {
   timestamp_t oldest_timestamp = time_.load();
-  for (auto thread_context: curr_running_workers_) {
+  for (auto thread_context : curr_running_workers_) {
     common::SharedLatch::ScopedSharedLatch running_guard(&thread_context->curr_running_txns_latch_);
-    const auto &oldest_txn = std::min_element(
-      thread_context->curr_running_txns_.cbegin(), thread_context->curr_running_txns_.cend());
+    const auto &oldest_txn =
+        std::min_element(thread_context->curr_running_txns_.cbegin(), thread_context->curr_running_txns_.cend());
     if (oldest_txn != thread_context->curr_running_txns_.end()) {
       oldest_timestamp = std::min(*oldest_txn, oldest_timestamp);
     }

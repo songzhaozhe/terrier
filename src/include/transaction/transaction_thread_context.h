@@ -1,7 +1,7 @@
 #pragma once
-#include "transaction/transaction_defs.h"
 #include <unordered_set>
 #include "common/shared_latch.h"
+#include "transaction/transaction_defs.h"
 
 namespace terrier::transaction {
 /**
@@ -17,7 +17,6 @@ class TransactionThreadContext {
    */
   explicit TransactionThreadContext(worker_id_t worker_id) : worker_id_(worker_id) {}
 
-
   /**
    * @return worker id of the thread
    */
@@ -25,9 +24,9 @@ class TransactionThreadContext {
 
   std::unordered_set<timestamp_t> curr_running_txns_;
   common::SharedLatch curr_running_txns_latch_;
+
  private:
   // id of the worker thread on which the transaction start and finish.
   worker_id_t worker_id_;
-
 };
 }  // namespace terrier::transaction
