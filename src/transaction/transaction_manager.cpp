@@ -205,7 +205,7 @@ TransactionQueue TransactionManager::CompletedTransactionsForGC() {
   TransactionQueue hand_to_gc(std::move(completed_txns_));
   common::SpinLatch::ScopedSpinLatch guard_worker(&curr_workers_latch_);
   for (auto thread_context : curr_running_workers_) {
-    common::SpinLatch::ScopedSpinLatch guard(&thread_context->curr_running_txns_latch_);
+    common::SharedLatch::ScopedSharedLatch running_guard(&(thread_context->curr_running_txns_latch_));
     hand_to_gc.splice_after(hand_to_gc.cbefore_begin(), std::move(thread_context->completed_txns_));
   }
   TERRIER_ASSERT(completed_txns_.empty(), "TransactionManager's queue should now be empty.");
