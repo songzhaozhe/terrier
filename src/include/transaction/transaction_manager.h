@@ -40,7 +40,7 @@ class TransactionManager {
    */
   TransactionThreadContext *RegisterWorker(worker_id_t worker_id) {
     TransactionThreadContext *thread_context = new TransactionThreadContext(worker_id);
-    common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
+    common::SpinLatch::ScopedSpinLatch guard(&curr_workers_latch_);
     curr_running_workers_.insert(thread_context);
     return thread_context;
   }
@@ -52,7 +52,7 @@ class TransactionManager {
    * @param thread context of the thread to unregister
    */
   void UnregisterWorker(TransactionThreadContext *thread) {
-    common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
+    common::SpinLatch::ScopedSpinLatch guard(&curr_workers_latch_);
     curr_running_workers_.erase(thread);
     delete thread;
   }
@@ -115,6 +115,7 @@ class TransactionManager {
   std::unordered_set<timestamp_t> curr_running_txns_;
   mutable common::SpinLatch curr_running_txns_latch_;
   std::unordered_set<TransactionThreadContext *> curr_running_workers_;
+  mutable common::SpinLatch curr_workers_latch_;
 
   bool gc_enabled_ = false;
   TransactionQueue completed_txns_;
