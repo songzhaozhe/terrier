@@ -1,7 +1,6 @@
 #include "transaction/transaction_manager.h"
 #include <algorithm>
 #include <utility>
-#include <cstdio>
 
 namespace terrier::transaction {
 TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContext *thread_context) {
@@ -19,14 +18,12 @@ TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContex
   auto *const result =
       new TransactionContext(start_time, start_time + INT64_MIN, buffer_pool_, log_manager_, thread_context);
   if (thread_context == nullptr) {
-      common::SpinLatch::ScopedSpinLatch running_guard(&curr_running_txns_latch_);
-      const auto ret UNUSED_ATTRIBUTE = curr_running_txns_.emplace(result->StartTime());
+    common::SpinLatch::ScopedSpinLatch running_guard(&curr_running_txns_latch_);
+    const auto ret UNUSED_ATTRIBUTE = curr_running_txns_.emplace(result->StartTime());
   } else {
     common::SharedLatch::ScopedExclusiveLatch running_guard(&(thread_context->curr_running_txns_latch_));
-    //  common::SpinLatch::ScopedSpinLatch running_guard(&curr_running_txns_latch_);
     const auto ret
     UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.emplace(result->StartTime());
-    //  const auto ret UNUSED_ATTRIBUTE = curr_running_txns_.emplace(result->StartTime());
   }
   TERRIER_ASSERT(ret.second, "commit start time should be globally unique");
   return result;
@@ -98,9 +95,7 @@ timestamp_t TransactionManager::Commit(TransactionContext *const txn, transactio
                                                        : UpdatingCommitCriticalSection(txn, callback, callback_arg);
   {
     // In a critical section, remove this transaction from the table of running transactions
-//    common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
     const timestamp_t start_time = txn->StartTime();
-//    const size_t ret UNUSED_ATTRIBUTE = curr_running_txns_.erase(start_time);
     TransactionThreadContext *thread_context = txn->GetThreadContext();
     if (thread_context == nullptr) {
       common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
@@ -132,9 +127,7 @@ void TransactionManager::Abort(TransactionContext *const txn) {
   txn->log_processed_ = true;
   {
     // In a critical section, remove this transaction from the table of running transactions
-//    common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
     const timestamp_t start_time = txn->StartTime();
-//    const size_t ret UNUSED_ATTRIBUTE = curr_running_txns_.erase(start_time);
     TransactionThreadContext *thread_context = txn->GetThreadContext();
     if (thread_context == nullptr) {
       common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
@@ -195,9 +188,11 @@ timestamp_t TransactionManager::OldestTransactionStartTime() const {
       oldest_timestamp = std::min(*oldest_txn, oldest_timestamp);
     }
   }
-//  common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
-//  const auto &oldest_txn = std::min_element(curr_running_txns_.cbegin(), curr_running_txns_.cend());
-//  const timestamp_t result = (oldest_txn != curr_running_txns_.end()) ? *oldest_txn : time_.load();
+  common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
+  const auto &oldest_txn = std::min_element(curr_running_txns_.cbegin(), curr_running_txns_.cend());
+  if (oldest_txn != curr_running_txns_.end()) {
+    oldest_timestamp = std::min(*oldest_txn, oldest_timestamp);
+  }
   return oldest_timestamp;
 }
 

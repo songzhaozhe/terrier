@@ -10,7 +10,6 @@
 #include "storage/write_ahead_log/log_manager.h"
 #include "transaction/transaction_context.h"
 #include "transaction/transaction_defs.h"
-#include <cstdio>
 
 namespace terrier::transaction {
 /**
@@ -40,10 +39,8 @@ class TransactionManager {
    * @return a constructed TransactionThreadContext with the given id
    */
   TransactionThreadContext *RegisterWorker(worker_id_t worker_id) {
-    // TODO(Tianyu): Implement
     TransactionThreadContext *thread_context = new TransactionThreadContext(worker_id);
     curr_running_workers_.insert(thread_context);
-    printf("Nested loop join executor -- ");
     return thread_context;
   }
 
