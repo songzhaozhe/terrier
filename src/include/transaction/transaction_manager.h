@@ -42,6 +42,7 @@ class TransactionManager {
     // TODO(Tianyu): Implement
     TransactionThreadContext *thread_context = new TransactionThreadContext(worker_id);
     curr_running_workers_.insert(thread_context);
+    LOG_INFO("Nested loop join executor -- ");
     return thread_context;
   }
 
@@ -53,6 +54,7 @@ class TransactionManager {
    */
   void UnregisterWorker(TransactionThreadContext *thread) {
     curr_running_workers_.erase(thread);
+    delete thread;
   }
   /**
    * Begins a transaction.

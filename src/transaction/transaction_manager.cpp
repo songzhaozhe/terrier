@@ -9,7 +9,7 @@ TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContex
   // chain which may be needed for this transaction, assuming that this transaction does not exist.
   common::SharedLatch::ScopedSharedLatch guard(&commit_latch_);
   timestamp_t start_time = time_++;
-
+  LOG_INFO("begining txn");
   // TODO(Tianyu):
   // Maybe embed this into the data structure, or use an object pool?
   // Doing this with std::map or other data structure is risky though, as they may not
@@ -17,10 +17,10 @@ TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContex
   // (That is, they may change as concurrent inserts and deletes happen)
   auto *const result =
       new TransactionContext(start_time, start_time + INT64_MIN, buffer_pool_, log_manager_, thread_context);
-//  common::SharedLatch::ScopedExclusiveLatch running_guard(&(thread_context->curr_running_txns_latch_));
-  common::SpinLatch::ScopedSpinLatch running_guard(&curr_running_txns_latch_);
-//  const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.emplace(result->StartTime());
-  const auto ret UNUSED_ATTRIBUTE = curr_running_txns_.emplace(result->StartTime());
+  common::SharedLatch::ScopedExclusiveLatch running_guard(&(thread_context->curr_running_txns_latch_));
+//  common::SpinLatch::ScopedSpinLatch running_guard(&curr_running_txns_latch_);
+  const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.emplace(result->StartTime());
+//  const auto ret UNUSED_ATTRIBUTE = curr_running_txns_.emplace(result->StartTime());
   TERRIER_ASSERT(ret.second, "commit start time should be globally unique");
   return result;
 }
