@@ -51,7 +51,6 @@ class TransactionManager {
    * @param thread context of the thread to unregister
    */
   void UnregisterWorker(TransactionThreadContext *thread) {
-    curr_running_workers_.erase(thread);
     delete thread;
   }
   /**
