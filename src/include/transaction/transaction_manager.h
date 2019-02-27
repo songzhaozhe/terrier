@@ -40,6 +40,7 @@ class TransactionManager {
    */
   TransactionThreadContext *RegisterWorker(worker_id_t worker_id) {
     TransactionThreadContext *thread_context = new TransactionThreadContext(worker_id);
+    common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
     curr_running_workers_.insert(thread_context);
     return thread_context;
   }
@@ -51,6 +52,7 @@ class TransactionManager {
    * @param thread context of the thread to unregister
    */
   void UnregisterWorker(TransactionThreadContext *thread) {
+    common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
     curr_running_workers_.erase(thread);
     delete thread;
   }
