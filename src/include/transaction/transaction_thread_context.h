@@ -23,7 +23,7 @@ class TransactionThreadContext {
   worker_id_t GetWorkerId() const { return worker_id_; }
 
   std::unordered_set<timestamp_t> curr_running_txns_;
-  common::SharedLatch curr_running_txns_latch_;
+  common::SpinLatch curr_running_txns_latch_;
   TransactionQueue completed_txns_;
 
  private:
