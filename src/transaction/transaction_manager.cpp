@@ -16,7 +16,7 @@ TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContex
   // Doing this with std::map or other data structure is risky though, as they may not
   // guarantee that the iterator or underlying pointer is stable across operations.
   // (That is, they may change as concurrent inserts and deletes happen)
-  TERRIER_ASSERT(thread_context, "context should not be null");
+  TERRIER_ASSERT(thread_context != nullptr, "context should not be null");
   auto *const result =
       new TransactionContext(start_time, start_time + INT64_MIN, buffer_pool_, log_manager_, thread_context);
   common::SharedLatch::ScopedExclusiveLatch running_guard(&(thread_context->curr_running_txns_latch_));
