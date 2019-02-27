@@ -107,7 +107,7 @@ timestamp_t TransactionManager::Commit(TransactionContext *const txn, transactio
     // the critical path there anyway
     // Also note here that GC will figure out what varlen entries to GC, as opposed to in the abort case.
     if (gc_enabled_) {
-      common::SharedLatch::ScopedSharedLatch guard(&curr_running_txns_latch_);
+      common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
       completed_txns_.push_front(txn);
     }
   }
@@ -136,7 +136,7 @@ void TransactionManager::Abort(TransactionContext *const txn) {
     }
     TERRIER_ASSERT(ret == 1, "Aborted transaction did not exist in global transactions table");
     if (gc_enabled_) {
-      common::SharedLatch::ScopedSharedLatch guard(&curr_running_txns_latch_);
+      common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
       completed_txns_.push_front(txn);
     }
   }
@@ -195,7 +195,7 @@ timestamp_t TransactionManager::OldestTransactionStartTime() const {
 }
 
 TransactionQueue TransactionManager::CompletedTransactionsForGC() {
-  common::SharedLatch::ScopedSharedLatch guard(&curr_running_txns_latch_);
+  common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
   TransactionQueue hand_to_gc(std::move(completed_txns_));
   TERRIER_ASSERT(completed_txns_.empty(), "TransactionManager's queue should now be empty.");
   return hand_to_gc;
