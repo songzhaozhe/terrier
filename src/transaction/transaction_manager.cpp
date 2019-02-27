@@ -179,7 +179,7 @@ void TransactionManager::GCLastUpdateOnAbort(TransactionContext *const txn) {
 timestamp_t TransactionManager::OldestTransactionStartTime() const {
   timestamp_t oldest_timestamp = time_.load();
   for (auto thread_context : curr_running_workers_) {
-    common::SharedLatch::ScopedSharedLatch running_guard(&thread_context->curr_running_txns_latch_);
+    common::SharedLatch::ScopedSharedLatch running_guard(&(thread_context->curr_running_txns_latch_));
     const auto &oldest_txn =
         std::min_element(thread_context->curr_running_txns_.cbegin(), thread_context->curr_running_txns_.cend());
     if (oldest_txn != thread_context->curr_running_txns_.end()) {
