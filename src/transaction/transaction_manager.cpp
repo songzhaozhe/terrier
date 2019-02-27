@@ -1,7 +1,7 @@
 #include "transaction/transaction_manager.h"
 #include <algorithm>
 #include <utility>
-#include "loggers/transaction_logger.h"
+#include <cstdio>
 
 namespace terrier::transaction {
 TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContext *thread_context) {
@@ -10,7 +10,7 @@ TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContex
   // chain which may be needed for this transaction, assuming that this transaction does not exist.
   common::SharedLatch::ScopedSharedLatch guard(&commit_latch_);
   timestamp_t start_time = time_++;
-  LOG_INFO("begining txn");
+  printf("begining txn");
   // TODO(Tianyu):
   // Maybe embed this into the data structure, or use an object pool?
   // Doing this with std::map or other data structure is risky though, as they may not

@@ -10,7 +10,7 @@
 #include "storage/write_ahead_log/log_manager.h"
 #include "transaction/transaction_context.h"
 #include "transaction/transaction_defs.h"
-#include "loggers/transaction_logger.h"
+#include <cstdio>
 
 namespace terrier::transaction {
 /**
@@ -43,7 +43,7 @@ class TransactionManager {
     // TODO(Tianyu): Implement
     TransactionThreadContext *thread_context = new TransactionThreadContext(worker_id);
     curr_running_workers_.insert(thread_context);
-    LOG_INFO("Nested loop join executor -- ");
+    printf("Nested loop join executor -- ");
     return thread_context;
   }
 
