@@ -17,9 +17,9 @@ TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContex
   // (That is, they may change as concurrent inserts and deletes happen)
   auto *const result =
       new TransactionContext(start_time, start_time + INT64_MIN, buffer_pool_, log_manager_, thread_context);
-  common::SharedLatch::ScopedExclusiveLatch running_guard(&thread_context.curr_running_txns_latch_);
+  common::SharedLatch::ScopedExclusiveLatch running_guard(&thread_context->curr_running_txns_latch_);
 //  common::SpinLatch::ScopedSpinLatch running_guard(&curr_running_txns_latch_);
-  const auto ret UNUSED_ATTRIBUTE = thread_context.curr_running_txns_.emplace(result->StartTime());
+  const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.emplace(result->StartTime());
 //  const auto ret UNUSED_ATTRIBUTE = curr_running_txns_.emplace(result->StartTime());
   TERRIER_ASSERT(ret.second, "commit start time should be globally unique");
   return result;
@@ -94,8 +94,8 @@ timestamp_t TransactionManager::Commit(TransactionContext *const txn, transactio
 //    common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
     const timestamp_t start_time = txn->StartTime();
 //    const size_t ret UNUSED_ATTRIBUTE = curr_running_txns_.erase(start_time);
-    common::SharedLatch::ScopedExclusiveLatch running_guard(&thread_context.curr_running_txns_latch_);
-    const auto ret UNUSED_ATTRIBUTE = thread_context.curr_running_txns_.erase(start_time);
+    common::SharedLatch::ScopedExclusiveLatch running_guard(&thread_context->curr_running_txns_latch_);
+    const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.erase(start_time);
     TERRIER_ASSERT(ret == 1, "Committed transaction did not exist in global transactions table");
     // It is not necessary to have to GC process read-only transactions, but it's probably faster to call free off
     // the critical path there anyway
@@ -122,8 +122,8 @@ void TransactionManager::Abort(TransactionContext *const txn) {
 //    common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
     const timestamp_t start_time = txn->StartTime();
 //    const size_t ret UNUSED_ATTRIBUTE = curr_running_txns_.erase(start_time);
-    common::SharedLatch::ScopedExclusiveLatch running_guard(&thread_context.curr_running_txns_latch_);
-    const auto ret UNUSED_ATTRIBUTE = thread_context.curr_running_txns_.erase(start_time);
+    common::SharedLatch::ScopedExclusiveLatch running_guard(&thread_context->curr_running_txns_latch_);
+    const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.erase(start_time);
     TERRIER_ASSERT(ret == 1, "Aborted transaction did not exist in global transactions table");
     if (gc_enabled_) {
       common::SharedLatch::ScopedSharedLatch guard(&commit_latch_);
@@ -169,9 +169,10 @@ void TransactionManager::GCLastUpdateOnAbort(TransactionContext *const txn) {
 timestamp_t TransactionManager::OldestTransactionStartTime() const {
   timestamp_t oldest_timestamp = -1;
   for (auto thread_context: curr_running_workers_) {
-    common::SharedLatch::ScopedSharedLatch running_guard(&thread_context.curr_running_txns_latch_);
-    const auto &oldest_txn = std::min_element(curr_running_txns_.cbegin(), curr_running_txns_.cend());
-    if (oldest_txn != curr_running_txns_.end()) {
+    common::SharedLatch::ScopedSharedLatch running_guard(&thread_context->curr_running_txns_latch_);
+    const auto &oldest_txn = std::min_element(
+      thread_context->curr_running_txns_.cbegin(), thread_context->curr_running_txns_.cend());
+    if (oldest_txn != thread_context->curr_running_txns_.end()) {
       oldest_timestamp = oldest_timestamp == -1 ? *oldest_txn : std::min(*oldest_txn, oldest_timestamp);
     }
   }

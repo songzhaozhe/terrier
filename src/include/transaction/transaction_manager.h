@@ -40,7 +40,7 @@ class TransactionManager {
    */
   TransactionThreadContext *RegisterWorker(worker_id_t worker_id) {
     // TODO(Tianyu): Implement
-    TransactionThreadContext *thread_context(worker_id);
+    TransactionThreadContext *thread_context = new TransactionThreadContext(worker_id);
     curr_running_workers_.insert(thread_context);
     return thread_context;
   }
