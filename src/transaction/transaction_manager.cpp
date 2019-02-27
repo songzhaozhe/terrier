@@ -1,7 +1,7 @@
 #include "transaction/transaction_manager.h"
 #include <algorithm>
 #include <utility>
-#include "loggers/storage_logger.h"
+#include "loggers/transaction_logger.h"
 
 namespace terrier::transaction {
 TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContext *thread_context) {

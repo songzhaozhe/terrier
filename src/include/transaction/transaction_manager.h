@@ -10,7 +10,7 @@
 #include "storage/write_ahead_log/log_manager.h"
 #include "transaction/transaction_context.h"
 #include "transaction/transaction_defs.h"
-#include "loggers/storage_logger.h"
+#include "loggers/transaction_logger.h"
 
 namespace terrier::transaction {
 /**
