@@ -177,7 +177,7 @@ void TransactionManager::GCLastUpdateOnAbort(TransactionContext *const txn) {
 }
 
 timestamp_t TransactionManager::OldestTransactionStartTime() const {
-  timestamp_t oldest_timestamp = time_.load();
+  timestamp_t oldest_timestamp = timestamp_t(-1);
   common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
   for (auto thread_context : curr_running_workers_) {
     common::SharedLatch::ScopedSharedLatch running_guard(&(thread_context->curr_running_txns_latch_));
@@ -191,6 +191,7 @@ timestamp_t TransactionManager::OldestTransactionStartTime() const {
   if (oldest_txn != curr_running_txns_.end()) {
     oldest_timestamp = std::min(*oldest_txn, oldest_timestamp);
   }
+  if (oldest_timestamp == timestamp_t(-1)) oldest_timestamp = time_.load();
   return oldest_timestamp;
 }
 
