@@ -203,6 +203,7 @@ timestamp_t TransactionManager::OldestTransactionStartTime() const {
 TransactionQueue TransactionManager::CompletedTransactionsForGC() {
   common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
   TransactionQueue hand_to_gc(std::move(completed_txns_));
+  common::SpinLatch::ScopedSpinLatch guard(&curr_workers_latch_);
   for (auto thread_context : curr_running_workers_) {
     hand_to_gc.splice_after(hand_to_gc.cbefore_begin(), std::move(thread_context->completed_txns_));
   }
