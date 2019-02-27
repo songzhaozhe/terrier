@@ -18,7 +18,7 @@ TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContex
   // (That is, they may change as concurrent inserts and deletes happen)
   auto *const result =
       new TransactionContext(start_time, start_time + INT64_MIN, buffer_pool_, log_manager_, thread_context);
-  common::SharedLatch::ScopedExclusiveLatch running_guard(&(thread_context->curr_running_txns_latch_));
+//  common::SharedLatch::ScopedExclusiveLatch running_guard(&(thread_context->curr_running_txns_latch_));
 //  common::SpinLatch::ScopedSpinLatch running_guard(&curr_running_txns_latch_);
   const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.emplace(result->StartTime());
 //  const auto ret UNUSED_ATTRIBUTE = curr_running_txns_.emplace(result->StartTime());

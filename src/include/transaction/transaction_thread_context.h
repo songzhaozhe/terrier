@@ -24,7 +24,7 @@ class TransactionThreadContext {
   worker_id_t GetWorkerId() const { return worker_id_; }
 
   std::unordered_set<timestamp_t> curr_running_txns_;
-  mutable common::SharedLatch curr_running_txns_latch_;
+  common::SharedLatch curr_running_txns_latch_;
  private:
   // id of the worker thread on which the transaction start and finish.
   worker_id_t worker_id_;
