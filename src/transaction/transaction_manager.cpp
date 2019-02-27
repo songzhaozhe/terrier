@@ -94,7 +94,7 @@ timestamp_t TransactionManager::Commit(TransactionContext *const txn, transactio
 //    common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
     const timestamp_t start_time = txn->StartTime();
 //    const size_t ret UNUSED_ATTRIBUTE = curr_running_txns_.erase(start_time);
-    TransactionThreadContext *thread_context = GetThreadContext();
+    TransactionThreadContext *thread_context = txn->GetThreadContext();
     common::SharedLatch::ScopedExclusiveLatch running_guard(&thread_context->curr_running_txns_latch_);
     const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.erase(start_time);
     TERRIER_ASSERT(ret == 1, "Committed transaction did not exist in global transactions table");
@@ -123,7 +123,7 @@ void TransactionManager::Abort(TransactionContext *const txn) {
 //    common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
     const timestamp_t start_time = txn->StartTime();
 //    const size_t ret UNUSED_ATTRIBUTE = curr_running_txns_.erase(start_time);
-    TransactionThreadContext *thread_context = GetThreadContext();
+    TransactionThreadContext *thread_context = txn->GetThreadContext();
     common::SharedLatch::ScopedExclusiveLatch running_guard(&(thread_context->curr_running_txns_latch_));
     const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.erase(start_time);
     TERRIER_ASSERT(ret == 1, "Aborted transaction did not exist in global transactions table");
