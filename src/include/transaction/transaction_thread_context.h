@@ -1,6 +1,6 @@
 #pragma once
 #include <unordered_set>
-#include "common/shared_latch.h"
+#include "common/spin_latch.h"
 #include "transaction/transaction_defs.h"
 
 namespace terrier::transaction {
