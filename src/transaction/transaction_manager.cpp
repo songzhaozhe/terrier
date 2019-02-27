@@ -17,7 +17,7 @@ TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContex
   // (That is, they may change as concurrent inserts and deletes happen)
   auto *const result =
       new TransactionContext(start_time, start_time + INT64_MIN, buffer_pool_, log_manager_, thread_context);
-  common::SharedLatch::ScopedExclusiveLatch running_guard(&thread_context->curr_running_txns_latch_);
+  common::SharedLatch::ScopedExclusiveLatch running_guard(&(thread_context->curr_running_txns_latch_));
 //  common::SpinLatch::ScopedSpinLatch running_guard(&curr_running_txns_latch_);
   const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.emplace(result->StartTime());
 //  const auto ret UNUSED_ATTRIBUTE = curr_running_txns_.emplace(result->StartTime());
@@ -95,7 +95,7 @@ timestamp_t TransactionManager::Commit(TransactionContext *const txn, transactio
     const timestamp_t start_time = txn->StartTime();
 //    const size_t ret UNUSED_ATTRIBUTE = curr_running_txns_.erase(start_time);
     TransactionThreadContext *thread_context = txn->GetThreadContext();
-    common::SharedLatch::ScopedExclusiveLatch running_guard(&thread_context->curr_running_txns_latch_);
+    common::SharedLatch::ScopedExclusiveLatch running_guard(&(thread_context->curr_running_txns_latch_));
     const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.erase(start_time);
     TERRIER_ASSERT(ret == 1, "Committed transaction did not exist in global transactions table");
     // It is not necessary to have to GC process read-only transactions, but it's probably faster to call free off
