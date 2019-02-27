@@ -191,7 +191,6 @@ timestamp_t TransactionManager::OldestTransactionStartTime() const {
       oldest_timestamp = std::min(*oldest_txn, oldest_timestamp);
     }
   }
-//  guard.~ScopedSpinLatch();
   common::SpinLatch::ScopedSpinLatch guard_running(&curr_running_txns_latch_);
   const auto &oldest_txn = std::min_element(curr_running_txns_.cbegin(), curr_running_txns_.cend());
   if (oldest_txn != curr_running_txns_.end()) {
