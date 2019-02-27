@@ -15,6 +15,7 @@ class TransactionThreadContext {
    */
   explicit TransactionThreadContext(worker_id_t worker_id) : worker_id_(worker_id) {}
 
+
   /**
    * @return worker id of the thread
    */
@@ -23,5 +24,8 @@ class TransactionThreadContext {
  private:
   // id of the worker thread on which the transaction start and finish.
   worker_id_t worker_id_;
+  std::unordered_set<timestamp_t> curr_running_txns_;
+  mutable common::SharedLatch curr_running_txns_latch_;
+
 };
 }  // namespace terrier::transaction

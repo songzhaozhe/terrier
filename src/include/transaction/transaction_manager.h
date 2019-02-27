@@ -40,7 +40,9 @@ class TransactionManager {
    */
   TransactionThreadContext *RegisterWorker(worker_id_t worker_id) {
     // TODO(Tianyu): Implement
-    return nullptr;
+    TransactionThreadContext *thread_context(worker_id);
+    curr_running_workers_.insert(thread_context);
+    return thread_context;
   }
 
   /**
@@ -50,7 +52,7 @@ class TransactionManager {
    * @param thread context of the thread to unregister
    */
   void UnregisterWorker(TransactionThreadContext *thread) {
-    // TODO(Tianyu): Implement
+    curr_running_workers_.erase(thread);
   }
   /**
    * Begins a transaction.
@@ -108,8 +110,9 @@ class TransactionManager {
   common::SharedLatch commit_latch_;
 
   // TODO(Matt): consider a different data structure if this becomes a measured bottleneck
-  std::unordered_set<timestamp_t> curr_running_txns_;
-  mutable common::SpinLatch curr_running_txns_latch_;
+//  std::unordered_set<timestamp_t> curr_running_txns_;
+//  mutable common::SpinLatch curr_running_txns_latch_;
+  std::unordered_set<TransactionThreadContext*> curr_running_workers_;
 
   bool gc_enabled_ = false;
   TransactionQueue completed_txns_;
