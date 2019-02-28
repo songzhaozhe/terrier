@@ -54,8 +54,8 @@ class TransactionManager {
   void UnregisterWorker(TransactionThreadContext *thread) {
     common::SpinLatch::ScopedSpinLatch guard(&curr_workers_latch_);
     curr_running_workers_.erase(thread);
-    common::SpinLatch::ScopedSpinLatch thread_running_guard(&(thread->curr_running_txns_latch_));
     common::SpinLatch::ScopedSpinLatch running_guard(&curr_running_txns_latch_);
+    common::SpinLatch::ScopedSpinLatch thread_running_guard(&(thread->curr_running_txns_latch_));
     completed_txns_.splice_after(completed_txns_.cbefore_begin(), std::move(thread->completed_txns_));
     delete thread;
   }
