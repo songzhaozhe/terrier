@@ -17,10 +17,10 @@ TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContex
   auto *const result =
       new TransactionContext(start_time, start_time + INT64_MIN, buffer_pool_, log_manager_, thread_context);
   if (thread_context == nullptr) {
-    common::SpinLatch::ScopedSpinLatch running_guard(&curr_running_txns_latch_);
+    common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
     const auto ret UNUSED_ATTRIBUTE = curr_running_txns_.emplace(result->StartTime());
   } else {
-    common::SpinLatch::ScopedSpinLatch running_guard(&(thread_context->curr_running_txns_latch_));
+    common::SpinLatch::ScopedSpinLatch guard(&(thread_context->curr_running_txns_latch_));
     const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.emplace(result->StartTime());
   }
   TERRIER_ASSERT(ret.second, "commit start time should be globally unique");
@@ -102,7 +102,7 @@ timestamp_t TransactionManager::Commit(TransactionContext *const txn, transactio
         completed_txns_.push_front(txn);
       }
     } else {
-      common::SpinLatch::ScopedSpinLatch running_guard(&(thread_context->curr_running_txns_latch_));
+      common::SpinLatch::ScopedSpinLatch guard(&(thread_context->curr_running_txns_latch_));
       const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.erase(start_time);
       if (gc_enabled_) {
         thread_context->completed_txns_.push_front(txn);
@@ -136,7 +136,7 @@ void TransactionManager::Abort(TransactionContext *const txn) {
         completed_txns_.push_front(txn);
       }
     } else {
-      common::SpinLatch::ScopedSpinLatch running_guard(&(thread_context->curr_running_txns_latch_));
+      common::SpinLatch::ScopedSpinLatch guard(&(thread_context->curr_running_txns_latch_));
       const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.erase(start_time);
       if (gc_enabled_) {
         thread_context->completed_txns_.push_front(txn);
@@ -182,7 +182,7 @@ void TransactionManager::GCLastUpdateOnAbort(TransactionContext *const txn) {
 
 timestamp_t TransactionManager::OldestTransactionStartTime() const {
   timestamp_t oldest_timestamp = time_.load();
-  common::SpinLatch::ScopedSpinLatch guard(&curr_workers_latch_);
+  common::SpinLatch::ScopedSpinLatch worker_guard(&curr_workers_latch_);
   for (auto thread_context : curr_running_workers_) {
     common::SpinLatch::ScopedSpinLatch running_guard(&(thread_context->curr_running_txns_latch_));
     const auto &oldest_txn =
@@ -191,7 +191,7 @@ timestamp_t TransactionManager::OldestTransactionStartTime() const {
       oldest_timestamp = std::min(*oldest_txn, oldest_timestamp);
     }
   }
-  common::SpinLatch::ScopedSpinLatch guard_running(&curr_running_txns_latch_);
+  common::SpinLatch::ScopedSpinLatch running_guard(&curr_running_txns_latch_);
   const auto &oldest_txn = std::min_element(curr_running_txns_.cbegin(), curr_running_txns_.cend());
   if (oldest_txn != curr_running_txns_.end()) {
     oldest_timestamp = std::min(*oldest_txn, oldest_timestamp);
@@ -202,7 +202,7 @@ timestamp_t TransactionManager::OldestTransactionStartTime() const {
 TransactionQueue TransactionManager::CompletedTransactionsForGC() {
   common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
   TransactionQueue hand_to_gc(std::move(completed_txns_));
-  common::SpinLatch::ScopedSpinLatch guard_worker(&curr_workers_latch_);
+  common::SpinLatch::ScopedSpinLatch worker_guard(&curr_workers_latch_);
   for (auto thread_context : curr_running_workers_) {
     common::SpinLatch::ScopedSpinLatch running_guard(&(thread_context->curr_running_txns_latch_));
     hand_to_gc.splice_after(hand_to_gc.cbefore_begin(), std::move(thread_context->completed_txns_));
