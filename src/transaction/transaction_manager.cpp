@@ -19,11 +19,12 @@ TransactionContext *TransactionManager::BeginTransaction(TransactionThreadContex
   if (thread_context == nullptr) {
     common::SpinLatch::ScopedSpinLatch guard(&curr_running_txns_latch_);
     const auto ret UNUSED_ATTRIBUTE = curr_running_txns_.emplace(result->StartTime());
+    TERRIER_ASSERT(ret.second, "commit start time should be globally unique");
   } else {
     common::SpinLatch::ScopedSpinLatch guard(&(thread_context->curr_running_txns_latch_));
     const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.emplace(result->StartTime());
+    TERRIER_ASSERT(ret.second, "commit start time should be globally unique");
   }
-  TERRIER_ASSERT(ret.second, "commit start time should be globally unique");
   return result;
 }
 
@@ -101,14 +102,15 @@ timestamp_t TransactionManager::Commit(TransactionContext *const txn, transactio
       if (gc_enabled_) {
         completed_txns_.push_front(txn);
       }
+      TERRIER_ASSERT(ret == 1, "Committed transaction did not exist in global transactions table");
     } else {
       common::SpinLatch::ScopedSpinLatch guard(&(thread_context->curr_running_txns_latch_));
       const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.erase(start_time);
       if (gc_enabled_) {
         thread_context->completed_txns_.push_front(txn);
       }
+      TERRIER_ASSERT(ret == 1, "Committed transaction did not exist in global transactions table");
     }
-    TERRIER_ASSERT(ret == 1, "Committed transaction did not exist in global transactions table");
     // It is not necessary to have to GC process read-only transactions, but it's probably faster to call free off
     // the critical path there anyway
     // Also note here that GC will figure out what varlen entries to GC, as opposed to in the abort case.
@@ -135,14 +137,15 @@ void TransactionManager::Abort(TransactionContext *const txn) {
       if (gc_enabled_) {
         completed_txns_.push_front(txn);
       }
+      TERRIER_ASSERT(ret == 1, "Aborted transaction did not exist in global transactions table");
     } else {
       common::SpinLatch::ScopedSpinLatch guard(&(thread_context->curr_running_txns_latch_));
       const auto ret UNUSED_ATTRIBUTE = thread_context->curr_running_txns_.erase(start_time);
       if (gc_enabled_) {
         thread_context->completed_txns_.push_front(txn);
       }
+      TERRIER_ASSERT(ret == 1, "Aborted transaction did not exist in global transactions table");
     }
-    TERRIER_ASSERT(ret == 1, "Aborted transaction did not exist in global transactions table");
   }
 }
 
